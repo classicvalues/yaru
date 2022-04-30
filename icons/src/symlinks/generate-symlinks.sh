@@ -17,20 +17,23 @@
 # this program; if not, see <https://www.gnu.org/licenses/gpl-3.0.txt>
 ##
 ## usage:
-##      generate-symlinks.sh [--all|--match <string>] [--verbose]
+##      generate-symlinks.sh [--all|--match <string>] --variant <variant> [--verbose]
 ##
 ## options:
-##      -a, --all            Generates all the symlinks defined in .list files
-##                           (warning: this might break manually generated symlinks)
-##      -m, --match <string> Generates only the symlinks in .list files that matches
-##                           the provided string
-##      -v, --verbose        More verbose output
+##      -a, --all              Generates all the symlinks defined in .list files
+##                             (warning: this might break manually generated symlinks)
+##      -m, --match <string>   Generates only the symlinks in .list files that matches
+##                             the provided string
+##      -t, --variant <string> Generates only the symlinks for the specified variant
+##      -n, --dry-run          Do not generate symlinks, simulate only
+##      -v, --verbose          More verbose output (useful for debugging)
 ##
 ## example:
-##      $ generate-symlinks.sh -m inode-directory
+##      To generate only power-profile-* symlinks
 ##
-##      This generates only the link defined in ./symbolic/apps.list
-# GENERATED_CODE: start
+##      $ generate-symlinks.sh --match power-profile
+##
+# CLInt GENERATED_CODE: start
 
 # No-arguments is not allowed
 [ $# -eq 0 ] && sed -ne 's/^## \(.*\)/\1/p' $0 && exit 1
@@ -41,7 +44,9 @@ for arg in "$@"; do
 	case "$arg" in
 		"--all") set -- "$@" "-a";;
 		"--match") set -- "$@" "-m";;
+		"--variant") set -- "$@" "-t";;
 		"--verbose") set -- "$@" "-v";;
+		"--dry-run") set -- "$@" "-n";;
 		*) set -- "$@" "$arg"
 	esac
 done
@@ -51,13 +56,15 @@ function print_illegal() {
 }
 
 # Parsing flags and arguments
-while getopts 'havm:' OPT; do
+while getopts 'hanvm:t:' OPT; do
 	case $OPT in
 		h) sed -ne 's/^## \(.*\)/\1/p' $0
 			exit 1 ;;
 		a) _all=1 ;;
+		n) _dry_run=1 ;;
 		v) _verbose=1 ;;
 		m) _match=$OPTARG ;;
+		t) _variant=$OPTARG ;;
 		\?) print_illegal $@ >&2;
 			echo "---"
 			sed -ne 's/^## \(.*\)/\1/p' $0
@@ -65,95 +72,130 @@ while getopts 'havm:' OPT; do
 			;;
 	esac
 done
-# GENERATED_CODE: end
+# CLInt GENERATED_CODE: end
 
 [ ! -z $_match ] && needle=$_match || needle=''
 
 function dlog() {
-    [ ! -z $_verbose ] && echo $*
+	[ ! -z $_verbose ] && echo $*
 }
+
+if [ "${BASH_VERSION%%.*}" -lt 4 ]; then
+	echo "Too old bash version ${BASH_VERSION}!";
+	exit 1
+fi
 
 DIR=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 
 # Icon sizes, contexts and variants
-CONTEXTS=("actions" "apps" "devices" "categories" "mimetypes" "places" "status" "emblems" "ui")
+CONTEXTS=("actions" "apps" "devices" "categories" "mimetypes" "places" "phosh" "status" "emblems" "ui")
+OPTIONAL_CONTEXTS=("panel" "animations")
 SIZES=("16x16" "24x24" "32x32" "48x48" "256x256" "16x16@2x" "24x24@2x" "32x32@2x" "48x48@2x" "256x256@2x")
-VARIANTS=("default" "mate")
+OPTIONAL_SIZES=("8x8" "8x8@2x" "22x22")
+VARIANTS=("default" "dark" "mate")
+
+CONTEXTS+=("${OPTIONAL_CONTEXTS[@]}")
+SIZES+=("${OPTIONAL_SIZES[@]}")
+
+if [ -n "$_variant" ]; then
+	if [[ ! " ${VARIANTS[*]} " =~ " ${_variant} " ]]; then
+		echo "WARNING: Requested $_variant is not known"
+	fi
+
+	VARIANTS=($_variant)
+fi
+
+
+linker () {
+	local icon_folder=$1
+	local icon_subfolder=$2
+	declare -A generated_links
+
+	LIST="$DIR/${icon_folder}/$CONTEXT.list"
+	if [ ! -d "$DIR/../../$THEME/$icon_subfolder/$CONTEXT" ]; then
+		dlog "  -- no $icon_subfolder/$CONTEXT, skipping it"
+		return
+	fi
+
+	cd $DIR/../../$THEME/$icon_subfolder/$CONTEXT
+	while read line;
+	do
+		if [[ "$line" =~ ^[[:space:]]*$ ]]; then
+			dlog "Ignoring empty line in $LIST"
+			continue
+		fi
+
+		if [[ $line != *"$needle"* ]]; then
+			dlog "line $line does not match with $needle: skipping"
+			continue
+		fi
+
+		SOURCE_FILE=${line%% *}
+		if [ -f "$SOURCE_FILE" ]; then
+			line_array=($line)
+			target="${line_array[0]}"
+			link_name="${line_array[1]}"
+			echo "[$icon_subfolder/$CONTEXT] linking $link_name -> $target"
+			if [ -n "${generated_links["$link_name"]}" ]; then
+				echo "  ERROR: $link_name is already linked to ${generated_links["$link_name"]}"
+				exit 1
+			fi
+			if [ "$target" = "$link_name" ]; then
+				echo "  ERROR: Can't link a file with itself!"
+				exit 1
+			fi
+			if [ -L "$target" ]; then
+				echo "  ERROR: $target is already a symlink, please point it to a real file!"
+				exit 1
+			fi
+			if [ -z "$_dry_run" ]; then
+				ln -sf "$target" "$link_name"
+			fi
+			generated_links["$link_name"]="$target"
+		elif [ $VARIANT = "default" ] &&
+			 [[ ! " ${OPTIONAL_SIZES[*]} " =~ " $icon_subfolder " ]] &&
+			 [[ ! " ${OPTIONAL_CONTEXTS[*]} " =~ " $CONTEXT " ]]; then
+			# The default variant must have all icons availables
+			echo "  ERROR: could not find symlink file \"$SOURCE_FILE\" in $(pwd)"
+			exit 1
+		else
+			# The variants can ignore the missing icons
+			dlog "skipping \"$line\" for $VARIANT variant: could not find source symlink file \"$SOURCE_FILE\" in $(pwd)"
+		fi
+
+	done < $LIST
+	cd $DIR/../../$THEME
+	return $symlinks_counter
+}
 
 # Fullcolor icons
 echo "Generating links for fullcolor icons..."
-# variants for loop
 for VARIANT in "${VARIANTS[@]}"
 do
 	[[ $VARIANT = "default" ]] && THEME="Yaru" || THEME="Yaru-${VARIANT}"
-	# contexts for loop
 	for CONTEXT in "${CONTEXTS[@]}"
 	do
 		dlog " -- "${CONTEXT}
-		# Sizes Loop
 		for SIZE in "${SIZES[@]}"
 		do
-			LIST="$DIR/fullcolor/$CONTEXT.list"
-			# Check if directory exists
-			if [ -d "$DIR/../../$THEME/$SIZE/$CONTEXT" ]; then
-				cd $DIR/../../$THEME/$SIZE/$CONTEXT
-				while read line;
-				do
-					if [[ $line == *"$needle"* ]]; then
-						SOURCE_FILE=${line%% *}
-						if [ -f "$SOURCE_FILE" ]; then # Check if source file exist because variants can have missing ones
-							echo linking $line in $SIZE"/"$CONTEXT
-							ln -sf $line
-						elif [ $VARIANT = "default" ]; then # But the default variant must have all icons availables
-							echo error $line symlink is invalid in $SIZE"/"$CONTEXT
-							exit 1
-						fi
-					else
-						dlog "[match only mode] skipping $line"
-					fi
-				done < $LIST
-				cd $DIR/../../$THEME
-			else
-				dlog "  -- skipping "$SIZE"/"$CONTEXT
-			fi
+			linker "fullcolor" $SIZE
 		done
 	done
 done
-echo "Done."
-
+echo "Done"
 
 # Symbolic icons
 echo "Generating links for symbolic icons..."
-THEME="Yaru" # Symbolic icons doesn't have variant
-# contexts for loop
-for CONTEXT in "${CONTEXTS[@]}"
+for VARIANT in "${VARIANTS[@]}"
 do
-	dlog " -- "$CONTEXT
-	LIST="$DIR/symbolic/$CONTEXT.list"
-	# Check if directory exists
-	if [ -d "$DIR/../../$THEME/scalable/$CONTEXT" ]; then
-		cd $DIR/../../$THEME/scalable/$CONTEXT
-		while read line;
-		do
-			if [[ $line == *"$needle"* ]]; then
-				SOURCE_FILE=${line%% *}
-				if [ -f "$SOURCE_FILE" ]; then
-					echo linking $line in "scalable/"$CONTEXT
-					ln -sf $line
-				else
-					echo error $line symlink is invalid in "scalable/"$CONTEXT
-					exit 1
-				fi
-			else
-				dlog "[match only mode] line $line does not match with $needle"
-			fi
-		done < $LIST
-		cd $DIR/../../$THEME
-	else
-		echo "  -- skipping scalable/"$CONTEXT
-	fi
+	[[ $VARIANT = "default" ]] && THEME="Yaru" || THEME="Yaru-${VARIANT}"
+	for CONTEXT in "${CONTEXTS[@]}"
+	do
+		dlog " -- "$CONTEXT
+		linker "symbolic" "scalable"
+	done
 done
-echo "Done."
+echo "Done"
 
 # Clear symlink errors
 if command -v symlinks 2>&1 >/dev/null; then

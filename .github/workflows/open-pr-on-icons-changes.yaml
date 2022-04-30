@@ -44,7 +44,7 @@ jobs:
           {
             project: baobab symbolics,
             repo: "https://gitlab.gnome.org/GNOME/baobab.git",
-            upstreambranch: master,
+            upstreambranch: main,
             localbranch: baobab-symbolics,
             projectdir: baobab,
             src: .,
@@ -53,7 +53,7 @@ jobs:
           {
             project: gnome-characters symbolics,
             repo: "https://gitlab.gnome.org/GNOME/gnome-characters.git",
-            upstreambranch: master,
+            upstreambranch: main,
             localbranch: gnome-characters-symbolics,
             projectdir: gnome-characters,
             src: .,
@@ -170,7 +170,7 @@ jobs:
       ]
     steps:
       # Checkout code
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Download from ${{ matrix.buildenv.repo }}, on branch ${{ matrix.buildenv.upstreambranch }}
         id: checknewupstream
         run: |
@@ -196,7 +196,7 @@ jobs:
           PROJECT_DIR: ${{ matrix.buildenv.projectdir }}
       - name: Create or update Pull Request
         if: steps.checknewupstream.outputs.modified == 'true'
-        uses: peter-evans/create-pull-request@v3.12.1
+        uses: peter-evans/create-pull-request@v4
         with:
           commit-message: New upstream symbolic icons list for ${{ matrix.buildenv.project }}
           title: Auto update new upstream symbolic icons list for ${{ matrix.buildenv.project }}

@@ -37,22 +37,23 @@
 //
 
   @if $t==normal {
-    background-color: lighten($bg_color, 5%);
+    background-color: if($variant == 'light', lighten($bg_color, 5%), $dash_background_color); // Yaru: use same background as dash for dark theme
     color: transparentize($fg_color,0.3);
-    border: 2px solid lighten($bg_color, 5%);
+    border: 1px solid $borders_color; // Yaru change: use our own border-color
   }
 
   @if $t==focus {
-    background-color: mix(lighten($bg_color, 5%), $selected_bg_color, 95%);
+    background-color: if($variant == 'light', lighten($bg_color, 5%), $dash_background_color); // Yaru: use same background as dash for dark theme
     border-color: $fc;
+    box-shadow: 0 0 0 1px $fc inset; // Yaru change: trick to get 2px border on focus without layout shifting
     color: $fg_color;
     &:hover {}
   }
 
   @if $t==hover {
-    background-color:lighten($hover_bg_color, 5%);
-    border-color:lighten($hover_bg_color, 5%);
-    color: transparentize($fg_color,0.3);
+    background-color: if($variant == 'light', lighten($bg_color, 5%), $dash_background_color); // Yaru: use same background as dash for dark theme
+    border-color: $hover_borders_color; // Yaru change: don't change color on hover
+    color: $fg_color; // Yaru change: don't change color on hover
   }
 
   @if $t==insensitive {
@@ -102,19 +103,19 @@
   // hover key
   @else if $t==hover {
     color: $tc;
-    background-color: lighten($c, 7%);
+    background-color: if($variant=="light", lighten($c, 1%), lighten($c, 7%)); // Yaru change: Make keyboard work on both variants
   }
 
   // active key
   @else if $t==active {
     color: $tc;
-    background-color: lighten($c, 10%);
+    background-color: if($variant=="light", darken($c, 2%), lighten($c, 10%)); // Yaru change: ↑↑↑
   }
 
   // checked key
   @else if $t==checked {
     color: $tc;
-    background-color: lighten($c, 15%);
+    background-color: if($variant=="light", darken($c, 5%), lighten($c, 15%)); // Yaru change: ↑↑↑
   }
 
   // insensitive key
@@ -136,7 +137,7 @@
 
 @mixin button($t, $tc:$fg_color, $c:$bg_color) {
 
-$button_bg_color: mix($tc, $c, 5%);
+$button_bg_color: mix($tc, $c, 7%); // Yaru change: increase contrast
 //
 // Button drawing function
 //
@@ -154,7 +155,6 @@ $button_bg_color: mix($tc, $c, 5%);
   @if $t==normal {
     color: $tc;
     background-color: $button_bg_color;
-    border-color: draw_border_color($button_bg_color); // Yaru: keep borders
   }
 
   // focused button
@@ -163,11 +163,11 @@ $button_bg_color: mix($tc, $c, 5%);
     background-color: $button_bg_color; // Yaru: keep regular bg on focused buttons
     box-shadow: inset 0 0 0 2px $focus_border_color; // Yaru: we detached focus from selected
     &:hover {
-      background-color: mix(lighten($button_bg_color, 3%), $selected_bg_color, 90%);
+      background-color: if($variant == 'light', darken($button_bg_color, 3%), lighten($button_bg_color, 3%)); // Yaru: keep regular bg on focused buttons
       box-shadow: inset 0 0 0 2px $focus_border_color; // Yaru: we detached focus from selected
     }
     &:active {
-      background-color: mix(lighten($button_bg_color, 6%), $selected_bg_color, 90%);
+      background-color: if($variant == 'light', darken($button_bg_color, 6%), lighten($button_bg_color, 6%)); // Yaru: keep regular bg on focused buttons
       box-shadow: inset 0 0 0 2px $focus_border_color; // Yaru: we detached focus from selected
     }
   }
@@ -175,31 +175,27 @@ $button_bg_color: mix($tc, $c, 5%);
   // hover button
   @else if $t==hover {
     color: $tc;
-    border-color: if($variant == 'light', draw_border_color(lighten($button_bg_color, 7%)), draw_border_color($button_bg_color)); // Yaru: keep borders
-    @include draw_shadows(0 1px opacify($shadow_color, 0.05)); // Yaru: adapt shell to gtk buttons (paper effect)
-    background-color: lighten($button_bg_color, 3%);
+    background-color: if($variant == 'light', darken($button_bg_color, 3%), lighten($button_bg_color, 3%)); // Yaru change: adapt for light theme
   }
 
   // active button
   @else if $t==active {
     color: $tc;
-    background-color:  lighten($button_bg_color, 6%);
-    border-color: draw_border_color(if($variant == 'light', $button_bg_color, darken($button_bg_color,7%))); // Yaru: keep borders
+    background-color: if($variant == 'light', darken($button_bg_color, 6%), lighten($button_bg_color, 6%)); // Yaru change: adapt for light theme
   }
 
   // checked button
   @else if $t==checked {
     color: $tc;
-    background-color: lighten($button_bg_color, 9%);
-    &:hover { background-color: lighten($button_bg_color, 12%);}
-    &:active { background-color: lighten($button_bg_color, 15%);}
+    background-color: if($variant == 'light', darken($button_bg_color, 9%), lighten($button_bg_color, 9%)); // Yaru change: adapt for light theme
+    &:hover { background-color: if($variant == 'light', darken($button_bg_color, 12%), lighten($button_bg_color, 12%));} // Yaru change: ↑↑↑
+    &:active { background-color: if($variant == 'light', darken($button_bg_color, 15%), lighten($button_bg_color, 15%));} // Yaru change: ↑↑↑
   }
 
   // insensitive button
   @else if $t==insensitive {
     color: transparentize($tc, 0.5);
     background-color: transparentize($tc, .95);
-    border-color: if($variant=='light', $insensitive_borders_color, darken($c, 5%)); // Yaru change: dark buttons need a dark border
   }
 
   // default/suggested button
@@ -268,7 +264,7 @@ $button_bg_color: mix($tc, $c, 5%);
   @if $flat {
     .overview-icon { background-color: transparent;}
   } @else {
-    .overview-icon { background-color: transparentize($color, .81);}
+    .overview-icon { background-color: transparentize($color, .95);} // Yaru change: softer non-flat icon
   }
   &:hover .overview-icon { background-color: transparentize($color, .9);}
 
