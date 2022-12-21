@@ -19,7 +19,7 @@ jobs:
             upstreambranch: master,
             localbranch: adwaita-symbolics,
             projectdir: adwaita-icon-theme,
-            src: Adwaita/scalable,
+            src: Adwaita/symbolic,
             dest: icons/upstream/adwaita-symbolics.list
           },
           {
@@ -125,7 +125,7 @@ jobs:
           {
             project: gnome-todo symbolics,
             repo: "https://gitlab.gnome.org/GNOME/gnome-todo.git",
-            upstreambranch: master,
+            upstreambranch: main,
             localbranch: gnome-todo-symbolics,
             projectdir: gnome-todo,
             src: .,
