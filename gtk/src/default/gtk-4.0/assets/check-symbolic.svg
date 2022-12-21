@@ -1,5 +1,1 @@
-<svg version="1.1" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
- <g transform="matrix(1.1256 0 0 1.1256 -.8786 -.87918)">
-  <path transform="matrix(1.2547 0 0 1.2547 -2.025 -2.362)" d="m11.05 4.173-0.066 0.058-4.734 4.147-2.776-2.38-0.839 0.948 3.615 3.804 5.5-5.787z" fill="#bebebe" fill-rule="evenodd"/>
- </g>
-</svg>
+<svg height="14" width="14" xmlns="http://www.w3.org/2000/svg"><g style="display:inline;opacity:1"><path style="display:inline;fill:#bebebe;fill-rule:evenodd;stroke-width:.5;stroke-linecap:square;fill-opacity:1" d="m411.83 342.344 1.1 1.1-6.203 6.202-3.73-3.733 1.1-1.1 2.63 2.632z" transform="translate(-401 -339)"/></g></svg>

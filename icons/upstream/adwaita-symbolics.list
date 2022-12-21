@@ -178,6 +178,7 @@
 ./devices/audio-input-microphone-symbolic.svg
 ./devices/audio-speakers-rtl-symbolic.svg
 ./devices/audio-speakers-symbolic.svg
+./devices/auth-face-symbolic.svg
 ./devices/auth-fingerprint-symbolic.svg
 ./devices/auth-sim-symbolic.svg
 ./devices/auth-smartcard-symbolic.svg
@@ -329,6 +330,7 @@
 ./mimetypes/application-x-appliance-symbolic.svg
 ./mimetypes/application-x-executable-symbolic.svg
 ./mimetypes/application-x-firmware-symbolic.svg
+./mimetypes/application-x-sharedlib-symbolic.svg
 ./mimetypes/audio-x-generic-symbolic.svg
 ./mimetypes/font-x-generic-symbolic.svg
 ./mimetypes/image-x-generic-symbolic.svg
