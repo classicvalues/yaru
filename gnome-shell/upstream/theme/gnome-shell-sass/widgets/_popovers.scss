@@ -1,14 +1,15 @@
 /* Popovers/Menus */
 
 $menu_bg_color: $bg_color;
-$menuitem_bg_color: lighten($menu_bg_color, 4%);
-$menuitem_border_radius: $base_border_radius*1.5;
 
-$submenu_bg_color: lighten($menu_bg_color, 7%);
+$menuitem_bg_color:  if($variant == 'light', darken($menu_bg_color, 5%),  lighten($menu_bg_color, 5%));
+$menuitem_border_radius: $base_border_radius * 1.5;
+
+$submenu_bg_color: if($variant == 'light', darken($menu_bg_color, 17%),  lighten($menu_bg_color, 13%));
 
 // the popover itself
 .popup-menu-boxpointer {
-  -arrow-rise: $base_margin+2px; // distance from the panel & screen edge
+  -arrow-rise: $base_padding; // distance from the panel & screen edge
 }
 
 // container of the popover menu
@@ -26,21 +27,21 @@ $submenu_bg_color: lighten($menu_bg_color, 7%);
 .popup-menu-content {
   padding: $base_padding;
   background-color: $bg_color;
-  border-radius: $modal_radius*1.25;
+  border-radius: $modal_radius * 1.25;
   border: 1px solid $outer_borders_color;
   box-shadow: 0 2px 4px 0 $shadow_color;
 }
 
 // menu items
 .popup-menu-item {
-  @include menuitem($bg:$menu_bg_color);
+  @include menuitem($bg:$menuitem_bg_color);
 
   border-radius: $menuitem_border_radius;
 
   &:checked {
     border-radius: $menuitem_border_radius $menuitem_border_radius 0 0 !important;
 
-    @if $is_highcontrast {
+    @if $contrast == 'high' {
       border: 1px solid $hc_inset_color;
       border-bottom-width:0;
     }
@@ -53,6 +54,10 @@ $submenu_bg_color: lighten($menu_bg_color, 7%);
   }
 }
 
+.popup-ornamented-menu-item {
+  &:ltr {padding-left: $base_padding;}
+  &:rtl {padding-right: $base_padding;}
+}
 
 // all other graphical elements (sliders)
 .popup-inactive-menu-item {
@@ -63,27 +68,25 @@ $submenu_bg_color: lighten($menu_bg_color, 7%);
 // symbolic icons in popover
 .popup-menu-arrow,
 .popup-menu-icon {
-  icon-size: 16px !important; // for some reason the variable doesn't work here
+  icon-size: $scalable_icon_size;
 }
 
 // popover submenus
 .popup-sub-menu {
   border-radius: 0 0 $menuitem_border_radius+1px $menuitem_border_radius+1px;
   margin-bottom: $base_padding;
+  border: 1px solid transparent;
+  background-color: $submenu_bg_color;
 
-  @if $is_highcontrast {
-    border: 1px solid $hc_inset_color;
-  }
-
-  .popup-menu-ornament {
-    min-width: $base_icon_size !important;
+  @if $contrast == 'high' {
+    border-color: $hc_inset_color;
   }
 
   // submenu specific styles
   .popup-menu-item {
     border-radius: 0;
-    @include menuitem($bg:$submenu_bg_color, $flat:false);
     border-top-width:0;
+    @include menuitem($bg:$submenu_bg_color);
 
     &:last-child {
       border-radius: 0 0 $menuitem_border_radius $menuitem_border_radius;
@@ -103,12 +106,8 @@ $submenu_bg_color: lighten($menu_bg_color, 7%);
 
 // container for radio and check boxes
 .popup-menu-ornament {
-  @extend %heading;
-  width: 1.2em;
-  text-align: center !important;
-
-  &:ltr { text-align: right;}
-  &:rtl { text-align: left;}
+  icon-size: $scalable_icon_size !important;
+  width: $scalable_icon_size;
 }
 
 // separator
@@ -118,10 +117,6 @@ $submenu_bg_color: lighten($menu_bg_color, 7%);
   .popup-separator-menu-item-separator {
     height: 1px; //not really the whole box
     background-color: $borders_color;
-  }
-
-  .popup-menu-ornament {
-    width: 0 !important;
   }
 
   // separators in submenus
@@ -148,15 +143,12 @@ $submenu_bg_color: lighten($menu_bg_color, 7%);
 .app-menu {
   max-width: 27.25em;
 
-  // this is unneeded at the top-level in this menu, hide it
-  .popup-menu-ornament { width: 0 !important; }
-
   .popup-inactive-menu-item:first-child {
     // "Open Windows" label
     > StLabel {
       @extend %caption_heading;
-      &:ltr {margin-right: $base_margin*2;}
-      &:rtl {margin-left: $base_margin*2;}
+      &:ltr {margin-right: $base_margin * 2;}
+      &:rtl {margin-left: $base_margin * 2;}
     }
   }
 }
